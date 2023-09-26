@@ -10,6 +10,7 @@ def process_data():
     df = pd.DataFrame(data)
     
     # Perform a simple Pandas operation
+    # Multiply the 'existing_column' by 2 and store it in a new column 'new_column'
     df['new_column'] = df['existing_column'] * 2
     
     # Convert the modified DataFrame back to JSON
