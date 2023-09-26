@@ -5,17 +5,16 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    # Create a sample DataFrame
-    df = pd.DataFrame({
-        'Name': ['Alice', 'Bob', 'Charlie'],
-        'Age': [25, 30, 35]
-    })
-
+    # Get JSON data from the incoming request
+    data = request.json
+    df = pd.DataFrame([data])
+    
     # Perform a basic operation using Pandas
-    average_age = df['Age'].mean()
-
+    average_age = df['Age'].astype(int).mean()
+    
     # Return the result
     return jsonify({'average_age': average_age})
 
 if __name__ == '__main__':
     app.run(port=5000)
+
