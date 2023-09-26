@@ -3,7 +3,7 @@ import pandas as pd
 
 app = Flask(__name__)
 
-@app.route('/process_data', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def process_data():
     # Get JSON data from the incoming request
     data = request.json
