@@ -4,20 +4,21 @@ import pandas as pd
 app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
-def process_data():
-    # Get JSON data from the incoming request
+def webhook():
     data = request.json
-    df = pd.DataFrame(data)
+    print("Received data:", data)
     
-    # Perform a simple Pandas operation
-    # Multiply the 'Age' column by 2 and store it in a new column 'Double_Age'
-    df['Double_Age'] = df['Age'] * 2
+    df = pd.DataFrame([data])
     
-    # Convert the modified DataFrame back to JSON
-    result = df.to_json(orient='split')
-    
-    return jsonify(result)
+    # Perform your operations here
+    # For example, calculating the average age if the 'Age' column exists
+    if 'COL$C' in df.columns:
+        average_age = df['COL$C'].astype(int).mean()
+        return jsonify({'average_age': average_age})
+    else:
+        return jsonify({'message': 'Age column not found'})
 
 if __name__ == '__main__':
     app.run(port=5000)
+
 
