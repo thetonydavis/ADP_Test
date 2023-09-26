@@ -3,17 +3,20 @@ import pandas as pd
 
 app = Flask(__name__)
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST'])  # Updated this line to match the new URL path
 def webhook():
     # Get JSON data from the incoming request
     data = request.json
-    df = pd.DataFrame([data])
+    df = pd.DataFrame(data)
     
-    # Perform a basic operation using Pandas
-    average_age = df['Age'].astype(int).mean()
+    # Perform a simple Pandas operation
+    # Multiply the 'Age' column by 2 and store it in a new column 'Double_Age'
+    df['Double_Age'] = df['Age'] * 2
     
-    # Return the result
-    return jsonify({'average_age': average_age})
+    # Convert the modified DataFrame back to JSON
+    result = df.to_json(orient='split')
+    
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(port=5000)
