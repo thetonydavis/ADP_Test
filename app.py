@@ -1,5 +1,5 @@
+from flask import Flask, request, jsonify
 import pandas as pd
-from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -13,8 +13,12 @@ def process_data():
         index = range(len(data)) if data else None
         df = pd.DataFrame(data, index=index)
     
-    # Perform a simple Pandas operation
-    df['NewAge'] = df['Age'] * 2
+    # Check if 'Age' column exists
+    if 'Age' in df.columns:
+        # Perform a simple Pandas operation
+        df['NewAge'] = df['Age'] * 2
+    else:
+        return jsonify({"error": "'Age' column not found in data"}), 400
     
     # Convert the modified DataFrame back to JSON
     result = df.to_json(orient='split')
@@ -23,3 +27,4 @@ def process_data():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
