@@ -1,20 +1,11 @@
 from flask import Flask, request, jsonify, send_file
 import pandas as pd
-import gspread
-import json
-import os
-from oauth2client.service_account import ServiceAccountCredentials
-import logging
 import csv
 from io import StringIO
+import requests
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-
-# Initialize the Flask application
 app = Flask(__name__)
 
-# Function to clean and convert Gain/Loss column to float
 def clean_gain_loss(value):
     try:
         value = value.replace("(", "-").replace(")", "").replace("$", "").replace(",", "").strip()
@@ -22,36 +13,22 @@ def clean_gain_loss(value):
     except ValueError:
         return 0.0
 
-@app.route('/webhook', methods=['POST'])
-def process_data():
-    data = request.json  # Assuming data is received as JSON
-    try:
-        incoming_df = pd.DataFrame(data)
-    except ValueError:
-        index = range(len(data)) if data else None
-        incoming_df = pd.DataFrame(data, index=index)
-    
-    if 'Age' in incoming_df.columns:
-        # Convert 'Age' to integers and then perform the multiplication
-        incoming_df['Age'] = incoming_df['Age'].astype(int)
-        incoming_df['NewAge'] = incoming_df['Age'] * 2
-    
-        # ... (the rest of your existing '/webhook' code for interacting with Google Sheets)
-    
-    return jsonify({"message": "Webhook processed"})
-
 @app.route('/rk_summary', methods=['POST'])
 def rk_summary():
-    file = request.files['rk_file']
-    file_content = file.read().decode()
+    file_url = request.json.get('file_url')
+    
+    response = requests.get(file_url)
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to download the file"}), 500
 
-    # Initialize dictionaries to store information
-    ssn_gain_loss = {}
-    ssn_first_name = {}
-    ssn_last_name = {}
+    file_content = response.text
 
     csv_file = StringIO(file_content)
     reader = csv.DictReader(csv_file)
+
+    ssn_gain_loss = {}
+    ssn_first_name = {}
+    ssn_last_name = {}
 
     for row in reader:
         ssn = row['Social Security Number']
@@ -67,7 +44,7 @@ def rk_summary():
             ssn_last_name[ssn] = last_name
 
     output = StringIO()
-    fieldnames = ['Social Security Number', 'First Name', 'Last Name', 'Total Gain/Loss']
+    fieldnames = ['Social Security Number', 'First Name', 'Last Name', 'Gain/Loss']
     writer = csv.DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
 
@@ -76,7 +53,7 @@ def rk_summary():
             'Social Security Number': ssn,
             'First Name': ssn_first_name[ssn],
             'Last Name': ssn_last_name[ssn],
-            'Total Gain/Loss': gain_loss
+            'Gain/Loss': gain_loss
         })
 
     output.seek(0)
