@@ -21,6 +21,7 @@ def process_data():
         df = pd.DataFrame(data, index=index)
 
     if 'Age' in df.columns:
+        df['Age'] = df['Age'].astype(int)
         df['NewAge'] = df['Age'] * 2
 
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
