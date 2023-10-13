@@ -7,6 +7,10 @@ import os
 
 app = Flask(__name__)
 
+@app.route('/', methods=['GET'])
+def home():
+    return "Hello, welcome to my Flask app!", 200
+
 @app.route('/webhook', methods=['POST'])
 def process_data():
     data = request.json  # Assuming data is received as JSON
