@@ -35,7 +35,7 @@ def process_data():
         existing_rows = sheet.row_count
 
         try:
-            new_row_index = len(sheet.get_all_records()) + 2  # +1 to account for header, +1 for new row
+            new_row_index = len(sheet.get_all_records()) + 1  # +1 to account for header, +1 for new row
 
             # Check if the new_row_index exceeds existing rows
             if new_row_index > existing_rows:
