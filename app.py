@@ -3,6 +3,7 @@ import pandas as pd
 import gspread
 import json
 import os
+import numpy as np
 from oauth2client.service_account import ServiceAccountCredentials
 import logging
 
@@ -21,6 +22,7 @@ def process_data():
         df = pd.DataFrame(data, index=index)
 
     if 'Age' in df.columns:
+        # Convert 'Age' to integers and then perform the multiplication
         df['Age'] = df['Age'].astype(int)
         df['NewAge'] = df['Age'] * 2
 
@@ -32,30 +34,24 @@ def process_data():
         client = gspread.authorize(creds)
         sheet = client.open("ADP Test Sheet").sheet1
 
-        # Check the number of rows in the Google Sheet
-        existing_rows = sheet.row_count
+        new_row_index = len(sheet.get_all_records()) + 1  # +1 to account for header
+
+        # Convert int64 to native Python int for JSON serialization
+        df = df.applymap(lambda x: int(x) if isinstance(x, np.int64) else x)
 
         try:
-            new_row_index = len(sheet.get_all_records()) + 1  # +1 to account for header, +1 for new row
-
-            # Check if the new_row_index exceeds existing rows
-            if new_row_index > existing_rows:
-                logging.warning(f"New row index {new_row_index} exceeds existing row count {existing_rows}. Please add more rows to the sheet.")
-                return jsonify({"error": "Insufficient rows in Google Sheet"}), 400
-
             new_age_value = df['NewAge'].iloc[-1]
             sheet.update_cell(new_row_index, 3, new_age_value)
             logging.info('Google Sheet updated successfully')
-
         except gspread.exceptions.APIError as e:
             logging.error(f"Failed to update Google Sheet: {e}")
             return jsonify({"error": "Failed to update Google Sheet"}), 500
-
     else:
         error_message = "'Age' column not found in data"
         logging.error(error_message)
         return jsonify({"error": error_message}), 400
 
+    # Convert the modified DataFrame back to JSON
     result = df.to_json(orient='split')
     return jsonify(result)
 
