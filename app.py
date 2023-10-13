@@ -3,6 +3,7 @@ import pandas as pd
 import csv
 from io import StringIO
 import requests
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -57,7 +58,14 @@ def rk_summary():
         })
 
     output.seek(0)
-    return send_file(output, as_attachment=True, attachment_filename='aggregated_gain_loss.csv', mimetype='text/csv')
+output_bytes = BytesIO(output.getvalue().encode())
+
+return send_file(
+    output_bytes,
+    as_attachment=True,
+    attachment_filename='aggregated_gain_loss.csv',
+    mimetype='text/csv'
+)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
