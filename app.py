@@ -3,14 +3,15 @@ import pandas as pd
 import gspread
 import json
 import os
+from oauth2client.service_account import ServiceAccountCredentials
 import logging
 import csv
-from oauth2client.service_account import ServiceAccountCredentials
 from io import StringIO
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 
+# Initialize the Flask application
 app = Flask(__name__)
 
 # Function to clean and convert Gain/Loss column to float
@@ -23,7 +24,21 @@ def clean_gain_loss(value):
 
 @app.route('/webhook', methods=['POST'])
 def process_data():
-    # ... (your existing code for this route)
+    data = request.json  # Assuming data is received as JSON
+    try:
+        incoming_df = pd.DataFrame(data)
+    except ValueError:
+        index = range(len(data)) if data else None
+        incoming_df = pd.DataFrame(data, index=index)
+    
+    if 'Age' in incoming_df.columns:
+        # Convert 'Age' to integers and then perform the multiplication
+        incoming_df['Age'] = incoming_df['Age'].astype(int)
+        incoming_df['NewAge'] = incoming_df['Age'] * 2
+    
+        # ... (the rest of your existing '/webhook' code for interacting with Google Sheets)
+    
+    return jsonify({"message": "Webhook processed"})
 
 @app.route('/rk_summary', methods=['POST'])
 def rk_summary():
