@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 import gspread
+import json
+import os
 from oauth2client.service_account import ServiceAccountCredentials
 import logging
 
@@ -26,7 +28,12 @@ def process_data():
         
         # Accessing Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+        
+        # Load credentials from environment variable
+        credentials_json = os.environ['GOOGLE_CREDENTIALS_JSON']
+        credentials_info = json.loads(credentials_json)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_info, scope)
+        
         client = gspread.authorize(creds)
         sheet = client.open("ADP Test Sheet").sheet1
         
@@ -51,3 +58,4 @@ def process_data():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
