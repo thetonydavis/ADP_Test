@@ -22,7 +22,6 @@ def process_data():
         df = pd.DataFrame(data, index=index)
 
     if 'Age' in df.columns:
-        # Convert 'Age' to integers and then perform the multiplication
         df['Age'] = df['Age'].astype(int)
         df['NewAge'] = df['Age'] * 2
 
@@ -36,9 +35,6 @@ def process_data():
 
         new_row_index = len(sheet.get_all_records()) + 1  # +1 to account for header
 
-        # Convert int64 to native Python int for JSON serialization
-        df = df.applymap(lambda x: int(x) if isinstance(x, np.int64) else x)
-
         try:
             new_age_value = df['NewAge'].iloc[-1]
             sheet.update_cell(new_row_index, 3, new_age_value)
@@ -50,6 +46,9 @@ def process_data():
         error_message = "'Age' column not found in data"
         logging.error(error_message)
         return jsonify({"error": error_message}), 400
+
+    # Convert int64 to native Python int for JSON serialization
+    df = df.applymap(lambda x: int(x) if isinstance(x, np.int64) else x)
 
     # Convert the modified DataFrame back to JSON
     result = df.to_json(orient='split')
