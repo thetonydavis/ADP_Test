@@ -2,14 +2,12 @@ from flask import Flask, request, jsonify
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import json
-import os
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
-
-@app.route('/', methods=['GET'])
-def home():
-    return "Hello, welcome to my Flask app!", 200
 
 @app.route('/webhook', methods=['POST'])
 def process_data():
@@ -25,25 +23,30 @@ def process_data():
     if 'Age' in df.columns:
         # Perform a simple Pandas operation
         df['NewAge'] = df['Age'] * 2
+        
+        # Accessing Google Sheets
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+        client = gspread.authorize(creds)
+        sheet = client.open("ADP Test Sheet").sheet1
+        
+        # Assuming NewAge is the 5th column (index 4) and update starts from the 2nd row
+        new_age_col_index = 4
+        row_start = 2
+        
+        # Updating Google Sheets with NewAge values
+        for i, new_age_value in enumerate(df['NewAge'], start=row_start):
+            sheet.update_cell(i, new_age_col_index, new_age_value)
+        
+        logging.info('Google Sheet updated successfully')
     else:
-        return jsonify({"error": "'Age' column not found in data"}), 400
-
-    # Authenticate with the Google Sheets API
-    credentials_json = json.loads(os.environ['GOOGLE_CREDENTIALS'])
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json)
-    client = gspread.authorize(creds)
-
-    # Open the Google Sheet and get the first worksheet
-    sheet = client.open("ADP Test Sheet").sheet1
-
-    # Update the Google Sheet with the modified data
-    # This is a simplified example and may need to be adjusted based on your specific requirements
-    for index, row in df.iterrows():
-        sheet.update('A{}:B{}'.format(index+2, index+2), [[row['Age'], row['NewAge']]])
-
+        error_message = "'Age' column not found in data"
+        logging.error(error_message)
+        return jsonify({"error": error_message}), 400
+    
     # Convert the modified DataFrame back to JSON
     result = df.to_json(orient='split')
-
+    
     return jsonify(result)
 
 if __name__ == '__main__':
