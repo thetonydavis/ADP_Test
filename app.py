@@ -30,13 +30,13 @@ def process_data():
         client = gspread.authorize(creds)
         sheet = client.open("ADP Test Sheet").sheet1
         
-        # Assuming NewAge is the 5th column (index 4) and update starts from the 2nd row
-        new_age_col_index = 4
-        row_start = 2
+        # Assuming each webhook call corresponds to a single new row being added
+        # Finding the row index for the new data
+        new_row_index = len(sheet.get_all_records()) + 2  # +1 to account for header, +1 for new row
         
-        # Updating Google Sheets with NewAge values
-        for i, new_age_value in enumerate(df['NewAge'], start=row_start):
-            sheet.update_cell(i, new_age_col_index, new_age_value)
+        # Updating the 'NewAge' column for the new row
+        new_age_value = df['NewAge'].iloc[-1]  # Getting the last 'NewAge' value from df
+        sheet.update_cell(new_row_index, 3, new_age_value)  # 'NewAge' is the 3rd column
         
         logging.info('Google Sheet updated successfully')
     else:
