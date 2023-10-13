@@ -1,62 +1,71 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import gspread
 import json
 import os
-from oauth2client.service_account import ServiceAccountCredentials
 import logging
+import csv
+from oauth2client.service_account import ServiceAccountCredentials
+from io import StringIO
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
+# Function to clean and convert Gain/Loss column to float
+def clean_gain_loss(value):
+    try:
+        value = value.replace("(", "-").replace(")", "").replace("$", "").replace(",", "").strip()
+        return float(value)
+    except ValueError:
+        return 0.0
+
 @app.route('/webhook', methods=['POST'])
 def process_data():
-    data = request.json  # Assuming data is received as JSON
-    try:
-        incoming_df = pd.DataFrame(data)
-    except ValueError:
-        index = range(len(data)) if data else None
-        incoming_df = pd.DataFrame(data, index=index)
+    # ... (your existing code for this route)
 
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credentials_json = os.environ['GOOGLE_CREDENTIALS_JSON']
-    credentials_info = json.loads(credentials_json)
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_info, scope)
+@app.route('/rk_summary', methods=['POST'])
+def rk_summary():
+    file = request.files['rk_file']
+    file_content = file.read().decode()
 
-    client = gspread.authorize(creds)
-    sheet = client.open("ADP Test Sheet").sheet1
+    # Initialize dictionaries to store information
+    ssn_gain_loss = {}
+    ssn_first_name = {}
+    ssn_last_name = {}
 
-    # Fetch all records from the Google Sheet
-    records = sheet.get_all_records()
-    df = pd.DataFrame.from_records(records)
+    csv_file = StringIO(file_content)
+    reader = csv.DictReader(csv_file)
 
-    if 'Age' in incoming_df.columns:
-        # Convert 'Age' to integers and then perform the multiplication
-        incoming_df['Age'] = incoming_df['Age'].astype(int)
-        incoming_df['NewAge'] = incoming_df['Age'] * 2
+    for row in reader:
+        ssn = row['Social Security Number']
+        gain_loss = clean_gain_loss(row['Gain/Loss'])
+        first_name = row['First Name']
+        last_name = row['Last Name']
 
-        # Find the next row index to update in Google Sheet
-        new_row_index = len(df) + 1  # +1 to account for header
+        if ssn in ssn_gain_loss:
+            ssn_gain_loss[ssn] += gain_loss
+        else:
+            ssn_gain_loss[ssn] = gain_loss
+            ssn_first_name[ssn] = first_name
+            ssn_last_name[ssn] = last_name
 
-        try:
-            # Convert to Python native int
-            new_age_value = int(incoming_df['NewAge'].iloc[-1])
-            # Update the Google Sheet
-            sheet.update_cell(new_row_index, 3, new_age_value)
-            logging.info('Google Sheet updated successfully')
-        except gspread.exceptions.APIError as e:
-            logging.error(f"Failed to update Google Sheet: {e}")
-            return jsonify({"error": "Failed to update Google Sheet"}), 500
-    else:
-        error_message = "'Age' column not found in data"
-        logging.error(error_message)
-        return jsonify({"error": error_message}), 400
+    output = StringIO()
+    fieldnames = ['Social Security Number', 'First Name', 'Last Name', 'Total Gain/Loss']
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
 
-    # Convert the modified DataFrame back to JSON
-    result = incoming_df.to_json(orient='split')
-    return jsonify(result)
+    for ssn, gain_loss in ssn_gain_loss.items():
+        writer.writerow({
+            'Social Security Number': ssn,
+            'First Name': ssn_first_name[ssn],
+            'Last Name': ssn_last_name[ssn],
+            'Total Gain/Loss': gain_loss
+        })
+
+    output.seek(0)
+    return send_file(output, as_attachment=True, attachment_filename='aggregated_gain_loss.csv', mimetype='text/csv')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
