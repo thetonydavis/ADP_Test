@@ -34,9 +34,8 @@ def rk_summary():
         
         app.logger.info("Successfully summarized the DataFrame.")
         
-        output = io.StringIO()
-        summary_df.to_csv(output, index=False)
-        
+        output = io.BytesIO()
+        summary_df.to_csv(output, index=False, encoding='utf-8')
         output.seek(0)
         return send_file(output, as_attachment=True, attachment_filename='summary.csv', mimetype='text/csv')
     
