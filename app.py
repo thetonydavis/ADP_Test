@@ -1,40 +1,31 @@
-from flask import Flask, send_file, request, jsonify
-import pandas as pd
-from datetime import datetime
-from io import StringIO
-import os
+import json
+
+from flask import Flask, request, jsonify, send_file
+
+from zapier_connection.utils.helper_function import text_to_csv, process_csv_data, check_conditions, convert_data_to_csv
 
 app = Flask(__name__)
 
-@app.route('/rk_summary', methods=['POST'])
-def rk_summary():
-    data = request.get_json()
-    
-    print("===== DEBUGGING START =====")
-    print("Received JSON Payload: ", data)
-    print("Type of Received JSON Payload: ", type(data))
-    print("===== DEBUGGING END =====")
-    
-    expected_keys = ['file_url', 'Max_Allowed_Com', 'Avg_HCE', 'Avg_NHCE', 'Allowed_HCE_Limit', 'employee_data_csv', 'HCE_Status']
-    if not all(key in data for key in expected_keys):
-        return jsonify({"error": "Missing one or more required keys in request"}), 400
 
-    # Assuming 'employee_data_csv' contains CSV data as a string
-    csv_data = data.get('employee_data_csv', "")
-    df = pd.read_csv(StringIO(csv_data))
+@app.route('/', methods=['GET', 'POST'])
+def handle_home():
+    return 'OK', 200
 
-    # User's existing DataFrame processing logic
-    df['Gain/Loss'] = df['Gain/Loss'].str.replace('[$,()]', '', regex=True).astype(float)
-    summary_df = df.groupby('Source Number')['Gain/Loss'].sum().reset_index()
-    summary_df.columns = ['Source Number', 'Total Gain/Loss']
-    summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].round(2)
 
-    # Save the DataFrame to a CSV file
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    csv_file_path = f"generated_summary_{timestamp}.csv"
-    summary_df.to_csv(csv_file_path, index=False)
+@app.route('/processData', methods=['POST'])
+def handle_process_data():
+    body = request.get_json()
+    print(body)
+    csv_data = text_to_csv(body['Census_Data'])
+    processed_data = process_csv_data(csv_data, body)
+    response_data = check_conditions(processed_data, body)
+    print(response_data)
+    return jsonify(json.dumps(response_data))
 
-    return send_file(csv_file_path, mimetype='text/csv', as_attachment=True, download_name=csv_file_path)
 
-if __name__ == '__main__':
-    app.run()
+@app.route('/dataToCSV', methods=['POST'])
+def handle_data_to_csv():
+    body = request.get_json()
+    response_data = json.loads(body['response_data'])
+    csv_file_path = convert_data_to_csv(response_data['response_data'])
+    return send_file(csv_file_path, mimetype='text/csv')
