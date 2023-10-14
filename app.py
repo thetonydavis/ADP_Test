@@ -13,8 +13,8 @@ def rk_summary():
     print("Type of Received JSON Payload: ", type(data))
     print("===== DEBUGGING END =====")
 
-    if not data or 'data' not in data:
-        return jsonify({"error": "Missing data in request"}), 400
+    if not data or 'file_url' not in data:
+    return jsonify({"error": "Missing file_url in request"}), 400
 
     # Convert received data to DataFrame
     df = pd.DataFrame(data['data'])
