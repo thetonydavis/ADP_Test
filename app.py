@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import io
 import logging
+from io import BytesIO
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -41,8 +42,8 @@ def rk_summary():
         app.logger.info("Successfully summarized the DataFrame.")
         
         # Convert the summary DataFrame to a CSV format
-        output = io.StringIO()
-        summary_df.to_csv(output, index=False)
+        output = BytesIO()
+        summary_df.to_csv(output, index=False, encoding='utf-8')
         
         # Prepare the output for download
         output.seek(0)
