@@ -1,20 +1,20 @@
+
 from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import requests
 import io
 import logging
 import os
-
+from datetime import datetime
 from boxsdk import OAuth2, Client
 
 # Initialize the Box SDK
 auth = OAuth2(
     client_id='dzp83ne72un5revhj27o272sc471v81i',
     client_secret='u6MZ7XgMPCsKJKMsWgIICwQ9nKTVWAXm',
-    access_token='dVSJlNiXCOUXHnu7rDk9fyJ1d64jPQv8',  # This should be securely stored and refreshed
+    access_token='kWiJ155fJ2fShv9SFnqT0q5nceYD8KSv',  # This should be securely stored and refreshed
 )
 client = Client(auth)
-
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -38,36 +38,32 @@ def rk_summary():
         
         app.logger.info("Successfully downloaded the file.")
         
-        # Read the CSV content into a DataFrame
         df = pd.read_csv(io.StringIO(response.text))
-        
         app.logger.info("Successfully read the CSV into a DataFrame.")
         
-        # Remove the dollar sign and commas from the 'Gain/Loss' column and convert it to float
         df['Gain/Loss'] = df['Gain/Loss'].str.replace('[$,()]', '', regex=True).astype(float)
-        
-        # Create sub-totals for the 'Gain/Loss' column
         summary_df = df.groupby('Source Number')['Gain/Loss'].sum().reset_index()
         summary_df.columns = ['Source Number', 'Total Gain/Loss']
-        
-        # Round the 'Total Gain/Loss' column to 2 decimal places
         summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].round(2)
         
         app.logger.info("Successfully summarized the DataFrame.")
         
-        # Write DataFrame to a CSV file
-        csv_file_path = "temporary_summary.csv"  # This will save in the current working directory
+        timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
+        unique_filename = f"summary_{timestamp_str}.csv"
+
+        # Log the unique filename before attempting to upload to Box
+        app.logger.info(f"Attempting to upload file with name: {unique_filename}")
+
+        csv_file_path = os.path.join(os.getcwd(), unique_filename)
         summary_df.to_csv(csv_file_path, index=False, encoding='utf-8')
-
-# Upload the file to Box.com
-folder_id = 'Waivz'
-folder = client.folder(folder_id=folder_id).get()
-with open(csv_file_path, 'rb') as f:
-    uploaded_file = folder.upload_stream(f, 'summary.csv')
-
         
-        # Send the file
-        return send_file(csv_file_path, mimetype='text/csv', as_attachment=True, attachment_filename='summary.csv')
+        # Upload the file to Box
+        folder_id = 'Waivz'
+        folder = client.folder(folder_id=folder_id).get()
+        with open(csv_file_path, 'rb') as f:
+            uploaded_file = folder.upload_stream(f, unique_filename)
+        
+        return send_file(csv_file_path, mimetype='text/csv', as_attachment=True, attachment_filename=unique_filename)
     
     except Exception as e:
         app.logger.error(f"An error occurred: {str(e)}")
