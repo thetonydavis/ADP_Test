@@ -14,7 +14,7 @@ def rk_summary():
     print("===== DEBUGGING END =====")
 
     if not data or 'file_url' not in data:
-    return jsonify({"error": "Missing file_url in request"}), 400
+        return jsonify({"error": "Missing file_url in request"}), 400
 
     # Convert received data to DataFrame
     df = pd.DataFrame(data['data'])
