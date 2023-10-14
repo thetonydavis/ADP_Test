@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import io
 import logging
-from io import BytesIO
+import os
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -39,20 +39,21 @@ def rk_summary():
         summary_df = df.groupby('Source Number')['Gain/Loss'].sum().reset_index()
         summary_df.columns = ['Source Number', 'Total Gain/Loss']
         
+        # Round the 'Total Gain/Loss' column to 2 decimal places
+        summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].round(2)
+        
         app.logger.info("Successfully summarized the DataFrame.")
         
-        # Convert the summary DataFrame to a CSV format
-        output = BytesIO()
-        summary_df.to_csv(output, index=False, encoding='utf-8')
+        # Write DataFrame to a CSV file
+        csv_file_path = "temporary_summary.csv"  # This will save in the current working directory
+        summary_df.to_csv(csv_file_path, index=False, encoding='utf-8')
         
-        # Prepare the output for download
-        output.seek(0)
-        return send_file(output, as_attachment=True, attachment_filename='summary.csv', mimetype='text/csv')
+        # Send the file
+        return send_file(csv_file_path, mimetype='text/csv', as_attachment=True, attachment_filename='summary.csv')
     
     except Exception as e:
         app.logger.error(f"An error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# Uncomment the line below when you're ready to run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
