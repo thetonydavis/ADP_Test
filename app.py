@@ -23,18 +23,19 @@ def rk_summary():
     summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].round(2)
     app.logger.info("Successfully summarized the DataFrame.")
 
-    # Save DataFrame to a CSV file
-    csv_buffer = StringIO()
-    summary_df.to_csv(csv_buffer, index=False)
-    csv_buffer.seek(0)
-
-    # Use Flask's send_file to return the CSV file
-    return send_file(
-        csv_buffer,
-        as_attachment=True,
-        download_name='summary_' + datetime.now().strftime('%Y%m%d%H%M%S') + '.csv',
+    csv_file_path = convert_data_to_csv(response_data['final_report'])
+return send_file(csv_file_path, mimetype='text/csv').strftime('%Y%m%d%H%M%S') + '.csv',
         mimetype='text/csv'
     )
 
 if __name__ == '__main__':
     app.run()
+
+def handle_eligibility_status_report():
+    body = request.get_json()
+    print(body)
+    response_data = json.loads(body['eligibility_status_report'])
+    csv_file_path = convert_data_to_csv(response_data['eligibility_status_report'])
+    return send_file(csv_file_path, mimetype='text/csv')
+
+@app.route('/hce_nhce_status_report', methods=['POST'])
