@@ -60,7 +60,7 @@ def rk_summary():
         summary_df.to_csv(csv_file_path, index=False, encoding='utf-8')
 
 # Upload the file to Box.com
-folder_id = 'YOUR_TARGET_FOLDER_ID'
+folder_id = 'Waivz'
 folder = client.folder(folder_id=folder_id).get()
 with open(csv_file_path, 'rb') as f:
     uploaded_file = folder.upload_stream(f, 'summary.csv')
