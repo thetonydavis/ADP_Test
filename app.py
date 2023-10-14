@@ -1,74 +1,48 @@
 from flask import Flask, request, jsonify, send_file
 import pandas as pd
-import csv
-from io import StringIO
-import json
-import os
-from oauth2client.service_account import ServiceAccountCredentials
+import requests
+import io
 import logging
-import gspread
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
-# Initialize the Flask application
 app = Flask(__name__)
-
-# Function to clean and convert Gain/Loss column to float
-def clean_gain_loss(value):
-    try:
-        value = value.replace("(", "-").replace(")", "").replace("$", "").replace(",", "").strip()
-        return float(value)
-    except ValueError:
-        return 0.0
-
-@app.route('/webhook', methods=['POST'])
-def process_data():
-    # Your existing '/webhook' route code here
-    # ...
-    return jsonify({"message": "Webhook processed"})
 
 @app.route('/rk_summary', methods=['POST'])
 def rk_summary():
-    file = request.files['rk_file']
-    file_content = file.read().decode()
+    try:
+        data = request.json
+        app.logger.info(f"Received data: {data}")
 
-    # Initialize dictionaries to store information
-    ssn_gain_loss = {}
-    ssn_first_name = {}
-    ssn_last_name = {}
+        if 'file_url' not in data or not data['file_url']:
+            return jsonify({"error": "Missing or empty 'file_url' in request data"}), 400
 
-    csv_file = StringIO(file_content)
-    reader = csv.DictReader(csv_file)
-
-    for row in reader:
-        ssn = row['Social Security Number']
-        gain_loss = clean_gain_loss(row['Gain/Loss'])
-        first_name = row['First Name']
-        last_name = row['Last Name']
-
-        if ssn in ssn_gain_loss:
-            ssn_gain_loss[ssn] += gain_loss
-        else:
-            ssn_gain_loss[ssn] = gain_loss
-            ssn_first_name[ssn] = first_name
-            ssn_last_name[ssn] = last_name
-
-    output = StringIO()
-    fieldnames = ['Social Security Number', 'First Name', 'Last Name', 'Total Gain/Loss']
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
-    writer.writeheader()
-
-    for ssn, gain_loss in ssn_gain_loss.items():
-        writer.writerow({
-            'Social Security Number': ssn,
-            'First Name': ssn_first_name[ssn],
-            'Last Name': ssn_last_name[ssn],
-            'Total Gain/Loss': gain_loss
-        })
-
-    output.seek(0)
-    return send_file(output, as_attachment=True, attachment_filename='aggregated_gain_loss.csv', mimetype='text/csv')
+        file_url = data['file_url']
+        
+        app.logger.info(f"Received file_url: {file_url}")
+        
+        response = requests.get(file_url)
+        response.raise_for_status()
+        
+        app.logger.info("Successfully downloaded the file.")
+        
+        df = pd.read_csv(io.StringIO(response.text))
+        
+        app.logger.info("Successfully read the CSV into a DataFrame.")
+        
+        summary_df = df.describe()
+        
+        app.logger.info("Successfully summarized the DataFrame.")
+        
+        output = io.StringIO()
+        summary_df.to_csv(output, index=False)
+        
+        output.seek(0)
+        return send_file(output, as_attachment=True, attachment_filename='summary.csv', mimetype='text/csv')
+    
+    except Exception as e:
+        app.logger.error(f"An error occurred: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True)
