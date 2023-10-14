@@ -1,8 +1,6 @@
-
 from flask import Flask, send_file, request, jsonify
 import pandas as pd
 from io import StringIO
-import json
 from datetime import datetime
 
 app = Flask(__name__)
@@ -16,19 +14,14 @@ def rk_summary():
 
     # Convert received data to DataFrame
     df = pd.DataFrame(data['data'])
-
-    # Tony's DataFrame processing code
     app.logger.info("Successfully read the CSV into a DataFrame.")
         
-        df['Gain/Loss'] = df['Gain/Loss'].str.replace('[$,()]', '', regex=True).astype(float)
-        summary_df = df.groupby('Source Number')['Gain/Loss'].sum().reset_index()
-        summary_df.columns = ['Source Number', 'Total Gain/Loss']
-        summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].round(2)
-        
-        app.logger.info("Successfully summarized the DataFrame.")
-        
-        timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
-        unique_filename = f"summary_{timestamp_str}.csv"
+    # Tony's DataFrame processing logic
+    df['Gain/Loss'] = df['Gain/Loss'].str.replace('[$,()]', '', regex=True).astype(float)
+    summary_df = df.groupby('Source Number')['Gain/Loss'].sum().reset_index()
+    summary_df.columns = ['Source Number', 'Total Gain/Loss']
+    summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].round(2)
+    app.logger.info("Successfully summarized the DataFrame.")
 
     # Save DataFrame to a CSV file
     csv_buffer = StringIO()
