@@ -5,6 +5,17 @@ import io
 import logging
 import os
 
+from boxsdk import OAuth2, Client
+
+# Initialize the Box SDK
+auth = OAuth2(
+    client_id='dzp83ne72un5revhj27o272sc471v81i',
+    client_secret='u6MZ7XgMPCsKJKMsWgIICwQ9nKTVWAXm',
+    access_token='dVSJlNiXCOUXHnu7rDk9fyJ1d64jPQv8',  # This should be securely stored and refreshed
+)
+client = Client(auth)
+
+
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
@@ -47,6 +58,13 @@ def rk_summary():
         # Write DataFrame to a CSV file
         csv_file_path = "temporary_summary.csv"  # This will save in the current working directory
         summary_df.to_csv(csv_file_path, index=False, encoding='utf-8')
+
+# Upload the file to Box.com
+folder_id = 'YOUR_TARGET_FOLDER_ID'
+folder = client.folder(folder_id=folder_id).get()
+with open(csv_file_path, 'rb') as f:
+    uploaded_file = folder.upload_stream(f, 'summary.csv')
+
         
         # Send the file
         return send_file(csv_file_path, mimetype='text/csv', as_attachment=True, attachment_filename='summary.csv')
