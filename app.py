@@ -8,7 +8,12 @@ app = Flask(__name__)
 @app.route('/rk_summary', methods=['POST'])
 def rk_summary():
     # Retrieve JSON data from the incoming request
-    data = request.get_json()
+data = request.get_json()
+    print("===== DEBUGGING START =====")
+    print("Received JSON Payload: ", data)
+    print("Type of Received JSON Payload: ", type(data))
+    print("===== DEBUGGING END =====")
+
     if not data or 'data' not in data:
         return jsonify({"error": "Missing data in request"}), 400
 
@@ -24,9 +29,9 @@ def rk_summary():
     app.logger.info("Successfully summarized the DataFrame.")
 
     csv_file_path = convert_data_to_csv(response_data['final_report'])
-return send_file(csv_file_path, mimetype='text/csv').strftime('%Y%m%d%H%M%S') + '.csv',
-        mimetype='text/csv'
-    )
+    return send_file(csv_file_path, mimetype='text/csv').strftime('%Y%m%d%H%M%S') + '.csv',
+            mimetype='text/csv'
+        )
 
 if __name__ == '__main__':
     app.run()
@@ -39,3 +44,7 @@ def handle_eligibility_status_report():
     return send_file(csv_file_path, mimetype='text/csv')
 
 @app.route('/hce_nhce_status_report', methods=['POST'])
+
+
+# Cloned route from raj code.py
+No Flask route found in raj code.py
