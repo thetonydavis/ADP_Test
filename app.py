@@ -54,9 +54,12 @@ def rk_summary():
         summary_df.to_csv(csv_file_path, index=False, encoding='utf-8')
         
         app.logger.info(f"Successfully wrote the DataFrame to a CSV file at {csv_file_path}")
+
+        # Convert the DataFrame to a CSV string
+        csv_string = summary_df.to_csv(index=False, encoding='utf-8')
         
         # Send the file
-        return send_file(csv_file_path, mimetype='text/csv', as_attachment=True)
+        return jsonify({"csv_data": csv_string})
     
     except Exception as e:
         app.logger.error(f"An error occurred: {str(e)}")
