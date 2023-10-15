@@ -1,3 +1,6 @@
+
+from helper_function import text_to_csv, process_csv_data, check_conditions, convert_data_to_csv
+
 from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import requests
@@ -11,6 +14,19 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 
 @app.route('/rk_summary', methods=['POST'])
+
+def rk_summary():
+    # Replace your current CSV processing logic with calls to helper functions
+    csv_data = text_to_csv(data['file_url'])  # Assuming 'file_url' contains the CSV text
+    processed_data = process_csv_data(csv_data, data)
+    response_data = check_conditions(processed_data, data)
+    
+    # Save the processed data to a CSV file
+    csv_file_path = convert_data_to_csv(response_data['response_data'])
+    
+    # Send the file
+    return send_file(csv_file_path, mimetype='text/csv')
+
 def rk_summary():
     try:
         data = request.json
