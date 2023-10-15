@@ -41,6 +41,10 @@ def rk_summary():
         
         # Round the 'Total Gain/Loss' column to 2 decimal places
         summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].round(2)
+
+        # Format 'Total Gain/Loss' as currency
+        summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].map('${:,.2f}'.format)
+
         
         app.logger.info("Successfully summarized the DataFrame.")
         
