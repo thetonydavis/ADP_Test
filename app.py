@@ -33,8 +33,9 @@ def rk_summary():
         
         app.logger.info("Successfully read the CSV into a DataFrame.")
         
-        # Remove the dollar sign and commas from the 'Gain/Loss' column and convert it to float
-        df['Gain/Loss'] = df['Gain/Loss'].str.replace('[$,()]', '', regex=True).astype(float)
+        # Remove the dollar sign, commas, and parentheses from the 'Gain/Loss' column and convert it to float
+        df['Gain/Loss'] = df['Gain/Loss'].str.replace('[$,]', '', regex=True)
+        df['Gain/Loss'] = df['Gain/Loss'].apply(lambda x: float(x.replace('(', '-').replace(')', '')) if isinstance(x, str) else x)
         
         # Group by 'Social Security Number' and sum the 'Gain/Loss' column
         summary_df = df.groupby('Social Security Number')['Gain/Loss'].sum().reset_index()
