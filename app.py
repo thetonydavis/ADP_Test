@@ -31,7 +31,7 @@ def rk_summary():
         # Read the CSV content into a DataFrame
         df = pd.read_csv(io.StringIO(response.text))
         
-        app.logger.info("Successfully read the CSV into a DataFrame.")
+        app.logger.info(f"Successfully read the CSV into a DataFrame: {df.head()}")
         
         # Remove the dollar sign, commas, and parentheses from the 'Gain/Loss' column and convert it to float
         df['Gain/Loss'] = df['Gain/Loss'].str.replace('[$,]', '', regex=True)
@@ -47,11 +47,13 @@ def rk_summary():
         # Format 'Total Gain/Loss' as currency
         summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].map('${:,.2f}'.format)
         
-        app.logger.info("Successfully summarized the DataFrame.")
+        app.logger.info(f"Successfully summarized the DataFrame: {summary_df.head()}")
         
         # Write DataFrame to a CSV file
         csv_file_path = "temporary_summary.csv"  # This will save in the current working directory
         summary_df.to_csv(csv_file_path, index=False, encoding='utf-8')
+        
+        app.logger.info(f"Successfully wrote the DataFrame to a CSV file at {csv_file_path}")
         
         # Send the file
         return send_file(csv_file_path, mimetype='text/csv', as_attachment=True)
