@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import requests
@@ -35,16 +36,15 @@ def rk_summary():
         # Remove the dollar sign and commas from the 'Gain/Loss' column and convert it to float
         df['Gain/Loss'] = df['Gain/Loss'].str.replace('[$,()]', '', regex=True).astype(float)
         
-        # Create sub-totals for the 'Gain/Loss' column
-        summary_df = df.groupby('Source Number')['Gain/Loss'].sum().reset_index()
-        summary_df.columns = ['Source Number', 'Total Gain/Loss']
+        # Group by 'Social Security Number' and sum the 'Gain/Loss' column
+        summary_df = df.groupby('Social Security Number')['Gain/Loss'].sum().reset_index()
+        summary_df.columns = ['Social Security Number', 'Total Gain/Loss']
         
         # Round the 'Total Gain/Loss' column to 2 decimal places
         summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].round(2)
 
         # Format 'Total Gain/Loss' as currency
         summary_df['Total Gain/Loss'] = summary_df['Total Gain/Loss'].map('${:,.2f}'.format)
-
         
         app.logger.info("Successfully summarized the DataFrame.")
         
