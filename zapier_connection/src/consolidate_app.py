@@ -4,6 +4,7 @@ import requests
 import io
 import logging
 import os
+import uuid  # Import uuid to generate unique file names
 
 logging.basicConfig(level=logging.DEBUG)
 
