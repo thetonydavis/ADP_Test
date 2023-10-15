@@ -50,7 +50,7 @@ def rk_summary():
         summary_df.to_csv(csv_file_path, index=False, encoding='utf-8')
         
         # Assuming file_path is the path to the file you want to send
-        return send_file(file_path, as_attachment=True, attachment_filename='summary.csv')
+        return send_file(csv_file_path, as_attachment=True, download_name='summary.csv')
     
     except Exception as e:
         app.logger.error(f"An error occurred: {str(e)}")
