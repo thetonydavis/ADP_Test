@@ -48,8 +48,8 @@ def rk_summary():
         csv_file_path = "temporary_summary.csv"  # This will save in the current working directory
         summary_df.to_csv(csv_file_path, index=False, encoding='utf-8')
         
-        # Send the file
-        return send_file(csv_file_path, mimetype='text/csv', as_attachment=True, attachment_filename='summary.csv')
+        # Assuming file_path is the path to the file you want to send
+        return send_file(file_path, as_attachment=True, attachment_filename='summary.csv')
     
     except Exception as e:
         app.logger.error(f"An error occurred: {str(e)}")
