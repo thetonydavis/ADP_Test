@@ -1,17 +1,13 @@
 
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 import pandas as pd
-import requests
-import io
-import logging
-import os
-
-logging.basicConfig(level=logging.DEBUG)
+import requests  # Needed for downloading the CSV file
 
 app = Flask(__name__)
 
 @app.route('/rk_summary', methods=['POST'])
 def rk_summary():
+
     try:
         data = request.json
         app.logger.info(f"Received data: {data}")
@@ -65,5 +61,33 @@ def rk_summary():
         app.logger.error(f"An error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
+
+@app.route('/fund_summary', methods=['POST'])
+def fund_summary():
+    try:
+        data = request.json
+        if 'file_url' not in data or not data['file_url']:
+            return jsonify({"error": "Missing or empty 'file_url' in request data"}), 400
+
+        # Logic to download the CSV file from the 'file_url'
+        # file_response = requests.get(data['file_url'])
+        # csv_df = pd.read_csv(io.StringIO(file_response.text))
+        
+        # For demonstration, assuming the DataFrame csv_df is already loaded.
+        # Sort the DataFrame by 'Fund Ticker'
+        sorted_df = csv_df.sort_values(by=['Fund Ticker'])
+        
+        # Compute the subtotals for 'Ending Balance' grouped by 'Fund Ticker'
+        sorted_df['Ending Balance'] = sorted_df['Ending Balance'].str.replace(',', '').str.replace('$', '').astype(float)
+        subtotals = sorted_df.groupby('Fund Ticker')['Ending Balance'].sum().reset_index()
+        
+        # Convert the subtotals DataFrame to a dictionary for JSON response
+        subtotals_dict = subtotals.to_dict(orient='records')
+        
+        return jsonify({"fund_summary": subtotals_dict}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
