@@ -62,7 +62,6 @@ def rk_summary():
         return jsonify({"error": str(e)}), 500
 
 
-
 @app.route('/fund_summary', methods=['POST'])
 def fund_summary():
     try:
@@ -71,6 +70,8 @@ def fund_summary():
             return jsonify({"error": "Missing or empty 'file_url' in request data"}), 400
 
         # Logic to download the CSV file from the 'file_url'
+        file_response = requests.get(data['file_url'])
+        csv_df = pd.read_csv(io.StringIO(file_response.text))
         # file_response = requests.get(data['file_url'])
         # csv_df = pd.read_csv(io.StringIO(file_response.text))
         
