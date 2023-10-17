@@ -2,12 +2,12 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 import requests  # Needed for downloading the CSV file
+import io  # Needed for reading the CSV content
 
 app = Flask(__name__)
 
 @app.route('/rk_summary', methods=['POST'])
 def rk_summary():
-
     try:
         data = request.json
         app.logger.info(f"Received data: {data}")
@@ -61,7 +61,6 @@ def rk_summary():
         app.logger.error(f"An error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/fund_summary', methods=['POST'])
 def fund_summary():
     try:
@@ -72,10 +71,7 @@ def fund_summary():
         # Logic to download the CSV file from the 'file_url'
         file_response = requests.get(data['file_url'])
         csv_df = pd.read_csv(io.StringIO(file_response.text))
-        # file_response = requests.get(data['file_url'])
-        # csv_df = pd.read_csv(io.StringIO(file_response.text))
         
-        # For demonstration, assuming the DataFrame csv_df is already loaded.
         # Sort the DataFrame by 'Fund Ticker'
         sorted_df = csv_df.sort_values(by=['Fund Ticker'])
         
