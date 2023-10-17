@@ -77,7 +77,9 @@ def fund_summary():
         
         # Compute the subtotals for 'Ending Balance' grouped by 'Fund Ticker'
         sorted_df['Ending Balance'] = sorted_df['Ending Balance'].str.replace(',', '').str.replace('$', '').astype(float)
+        # Compute the subtotals for 'Ending Balance' grouped by 'Fund Ticker' and format as currency with 2 decimals
         subtotals = sorted_df.groupby('Fund Ticker')['Ending Balance'].sum().reset_index()
+        subtotals['Ending Balance'] = subtotals['Ending Balance'].apply(lambda x: f"${x:,.2f}")
         
         # Convert the subtotals DataFrame to a dictionary for JSON response
         subtotals_dict = subtotals.to_dict(orient='records')
