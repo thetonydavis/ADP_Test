@@ -1,3 +1,22 @@
+
+# Found config settings
+import os
+import tempfile
+import uuid
+
+TEXT_FILE_PATH = os.path.join(
+    tempfile.gettempdir(),
+    f'{uuid.uuid1()}.txt'
+)
+
+CSV_FILE_PATH = os.path.join(
+    tempfile.gettempdir(),
+    f'{uuid.uuid1()}.csv'
+)
+
+HCE_AMOUNT = 130000
+HCE_OWNERSHIP_PERCENTAGE = 5
+HCE_FAMILY_RELATIONSHIP = 'Yes'
 from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import requests  # Needed for downloading the CSV file
@@ -134,6 +153,11 @@ def handle_ccd(body):
     pass
 
 @app.route('/calculate_correlative_destribution', methods=['POST'])
+def handle_calculate_correlative_destribution():
+    body = request.get_json()
+    correlative_destribution = handle_ccd(body)
+    csv_file_path = convert_data_to_csv(correlative_destribution)
+    return send_file(csv_file_path, mimetype='text/csv')
 
 # Helper function: handle_ccd
 def handle_ccd(body: dict) -> dict:
