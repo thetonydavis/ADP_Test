@@ -54,7 +54,7 @@ def handle_ccd(body: dict) -> dict:
         if row['HCE_NHCE'] == 'HCE':
             if int(row['Plan_Year_Total_Compensation'].replace(',', '')) >= max_allowed_compensation:
                 row['Plan_Year_Total_Compensation'] = max_allowed_compensation
-            row['Excess_Contribution'] = int((row['Plan_Year_Total_Compensation'] * row['Excess_Percentage']) / 100)
+            row['Excess_Contribution'] = int((float(row['Plan_Year_Total_Compensation'].replace(',', '')) * float(row['Excess_Percentage'])) / 100)
         new_row = row[needed_columns]
         correlative_destribution.append(new_row.to_dict())
     return correlative_destribution
