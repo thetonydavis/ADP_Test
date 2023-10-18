@@ -126,3 +126,81 @@ def convert_data_to_csv(data: dict) -> str:
     csv_data = pd.DataFrame.from_dict(data)
     csv_data.to_csv(config.CSV_FILE_PATH, index=False)
     return config.CSV_FILE_PATH
+
+# Helper function: handle_ccd
+# This is a placeholder. You'll need to replace this with your actual implementation.
+def handle_ccd(body):
+    # Your logic here
+    pass
+
+@app.route('/calculate_correlative_destribution', methods=['POST'])
+def handle_calculate_correlative_destribution():
+    body = request.get_json()
+    correlative_destribution = handle_ccd(body)
+    csv_file_path = convert_data_to_csv(correlative_destribution)
+    return send_file(csv_file_path, mimetype='text/csv')
+
+# Helper function: handle_ccd
+def handle_ccd(body: dict) -> dict:
+    allowd_hce_limit = remove_percentage_get_float(body['Allowed_HCE_Limit'])
+    average_hce = remove_percentage_get_float(body['Avg_HCE'])
+    max_allowed_compensation = int(body['Max_Allowed_Comp'])
+    employee_data_csv = text_to_csv(body['employee_data_csv'])
+    employee_data_csv['Plan_Year_Total_Compensation'] = employee_data_csv['Plan_Year_Total_Compensation'].apply(
+        remove_commas_get_int)
+    excess_deferral_percentage = average_hce - allowd_hce_limit
+    employee_data_csv['Excess_Percentage'] = round(
+        excess_deferral_percentage, 2)
+    employee_data_csv['Excess_Contribution'] = 0.0
+    needed_columns = ['First_Name', 'Last_Name', 'HCE_NHCE',
+                      'Plan_Year_Total_Compensation', 'Excess_Percentage', 'Excess_Contribution']
+    correlative_destribution = []
+    for i, row in employee_data_csv.iterrows():
+        if row['HCE_NHCE'] == 'HCE':
+            if row['Plan_Year_Total_Compensation'] >= max_allowed_compensation:
+                row['Plan_Year_Total_Compensation'] = max_allowed_compensation
+            row['Excess_Contribution'] = int((row['Plan_Year_Total_Compensation'] * row['Excess_Percentage']) / 100)
+        row['Plan_Year_Total_Compensation'] = '{:,}'.format(row['Plan_Year_Total_Compensation'])
+        row['Excess_Contribution'] = '{:,}'.format(row['Excess_Contribution'])
+        new_row = row[needed_columns]
+        correlative_destribution.append(new_row.to_dict())
+    return correlative_destribution
+
+# Helper function: convert_data_to_csv
+def convert_data_to_csv(data: dict) -> str:
+    csv_data = pd.DataFrame.from_dict(data)
+    csv_data.to_csv(config.CSV_FILE_PATH, index=False)
+    return config.CSV_FILE_PATH
+
+# Additional Helper function: remove_percentage_get_float
+def remove_percentage_get_float(text: str) -> float:
+    text = text.replace('%', '')
+    text = float(text)
+    return text
+
+# Additional Helper function: text_to_csv
+def text_to_csv(text: str) -> pd.DataFrame:
+    with open(config.TEXT_FILE_PATH, 'w') as file:
+        file.write(text)
+    csv_data = pd.read_csv(config.TEXT_FILE_PATH)
+    os.unlink(config.TEXT_FILE_PATH)
+    return csv_data
+
+# Found config settings
+import os
+import tempfile
+import uuid
+
+TEXT_FILE_PATH = os.path.join(
+    tempfile.gettempdir(),
+    f'{uuid.uuid1()}.txt'
+)
+
+CSV_FILE_PATH = os.path.join(
+    tempfile.gettempdir(),
+    f'{uuid.uuid1()}.csv'
+)
+
+HCE_AMOUNT = 130000
+HCE_OWNERSHIP_PERCENTAGE = 5
+HCE_FAMILY_RELATIONSHIP = 'Yes'
