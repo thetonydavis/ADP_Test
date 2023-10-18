@@ -134,11 +134,6 @@ def handle_ccd(body):
     pass
 
 @app.route('/calculate_correlative_destribution', methods=['POST'])
-def handle_calculate_correlative_destribution():
-    body = request.get_json()
-    correlative_destribution = handle_ccd(body)
-    csv_file_path = convert_data_to_csv(correlative_destribution)
-    return send_file(csv_file_path, mimetype='text/csv')
 
 # Helper function: handle_ccd
 def handle_ccd(body: dict) -> dict:
