@@ -88,12 +88,6 @@ def fund_summary():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Helper function: handle_ccd
-# This is a placeholder. You'll need to replace this with your actual implementation.
-def handle_ccd(body):
-    # Your logic here
-    pass
-
 @app.route('/calculate_correlative_destribution', methods=['POST'])
 def handle_calculate_correlative_destribution():
     body = request.get_json()
