@@ -88,3 +88,9 @@ def fund_summary():
         return jsonify({"fund_summary": subtotals_dict}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/annotated_progress_bar', methods=['POST'])
+def handle_annotated_progress_bar():
+    body = request.get_json()
+    shorten_url = annotated_progress_bar(body['percentage'], body['label'])
+    return shorten_url
