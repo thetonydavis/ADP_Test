@@ -79,3 +79,9 @@ def handle_route_qnce():
     csv_file_path = convert_data_to_csv(individual_qnhce)
     print(csv_file_path)
     return send_file(csv_file_path, mimetype='text/csv')
+
+@app.route('/annotated_progress_bar', methods=['POST'])
+def handle_annotated_progress_bar():
+    body = request.get_json()
+    shorten_url = annotated_progress_bar(body['percentage'], body['label'])
+    return shorten_url
